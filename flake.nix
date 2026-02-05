@@ -6,8 +6,14 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachSystem ["x86_64-linux"] (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+    }:
+    flake-utils.lib.eachSystem [ "x86_64-linux" ] (
+      system:
       let
         pkgs = import nixpkgs {
           inherit system;
@@ -82,39 +88,61 @@
           '';
 
           installPhase = ''
-            runHook preInstall
+                        runHook preInstall
 
-            mkdir -p $out/libexec/ygo-omega
-            cp -r . $out/libexec/ygo-omega/
-            chmod +x $out/libexec/ygo-omega/YGO\ Omega.x86_64
-            chmod +x $out/libexec/ygo-omega/OmegaUpdater
+                        mkdir -p $out/libexec/ygo-omega
+                        cp -r . $out/libexec/ygo-omega/
+                        chmod +x $out/libexec/ygo-omega/YGO\ Omega.x86_64
+                        chmod +x $out/libexec/ygo-omega/OmegaUpdater
 
-            # Create wrapper script
-            mkdir -p $out/bin
-            cat > $out/bin/.ygo-omega-unwrapped <<'WRAPPER_EOF'
-#!/usr/bin/env bash
-set -e
-DATA_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/ygo-omega"
-if [ ! -d "$DATA_DIR" ]; then
-  echo "First run: Initializing YGO Omega data directory at $DATA_DIR"
-  mkdir -p "$DATA_DIR"
-  cp -r LIBEXEC_PATH/* "$DATA_DIR/"
-  chmod -R u+w "$DATA_DIR"
-  chmod +x "$DATA_DIR/YGO Omega.x86_64"
-  chmod +x "$DATA_DIR/OmegaUpdater"
-  echo "YGO Omega initialized successfully!"
-fi
-cd "$DATA_DIR"
-exec "./YGO Omega.x86_64" "$@"
-WRAPPER_EOF
-            sed -i "s|LIBEXEC_PATH|$out/libexec/ygo-omega|g" $out/bin/.ygo-omega-unwrapped
-            chmod +x $out/bin/.ygo-omega-unwrapped
+                        # Create wrapper script
+                        mkdir -p $out/bin
+                        cat > $out/bin/.ygo-omega-unwrapped <<'WRAPPER_EOF'
+            #!/usr/bin/env bash
+            set -e
+            DATA_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/ygo-omega"
+            if [ ! -d "$DATA_DIR" ]; then
+              echo "First run: Initializing YGO Omega data directory at $DATA_DIR"
+              mkdir -p "$DATA_DIR"
+              cp -r LIBEXEC_PATH/* "$DATA_DIR/"
+              chmod -R u+w "$DATA_DIR"
+              chmod +x "$DATA_DIR/YGO Omega.x86_64"
+              chmod +x "$DATA_DIR/OmegaUpdater"
+              echo "YGO Omega initialized successfully!"
+            fi
+            cd "$DATA_DIR"
+            exec "./YGO Omega.x86_64" "$@"
+            WRAPPER_EOF
+                        sed -i "s|LIBEXEC_PATH|$out/libexec/ygo-omega|g" $out/bin/.ygo-omega-unwrapped
+                        chmod +x $out/bin/.ygo-omega-unwrapped
 
-            makeWrapper $out/bin/.ygo-omega-unwrapped $out/bin/ygo-omega \
-              --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath ygo-omega.runtimeLibs}" \
-              --set SDL_VIDEODRIVER x11
+                        makeWrapper $out/bin/.ygo-omega-unwrapped $out/bin/ygo-omega \
+                          --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath ygo-omega.runtimeLibs}" \
+                          --set SDL_VIDEODRIVER x11
 
-            runHook postInstall
+                        # Create desktop entry
+                        mkdir -p $out/share/applications
+                        cat > $out/share/applications/ygo-omega.desktop <<DESKTOP_EOF
+            [Desktop Entry]
+            Type=Application
+            Name=YGO Omega
+            Comment=Yu-Gi-Oh! Trading Card Game Simulator
+            Exec=$out/bin/ygo-omega
+            Icon=ygo-omega
+            Categories=Game;CardGame;
+            Terminal=false
+            StartupNotify=true
+            Keywords=yugioh;trading card;tcg;omega;
+            DESKTOP_EOF
+
+                        # Extract and install icon (from game data)
+                        mkdir -p $out/share/icons/hicolor/128x128/apps
+                        if [ -f "YGO Omega_Data/Resources/UnityPlayer.png" ]; then
+                          cp "YGO Omega_Data/Resources/UnityPlayer.png" \
+                             $out/share/icons/hicolor/128x128/apps/ygo-omega.png
+                        fi
+
+                        runHook postInstall
           '';
 
           postFixup = ''
@@ -137,7 +165,8 @@ WRAPPER_EOF
           };
         };
 
-      in {
+      in
+      {
         packages.default = ygo-omega;
         apps.default = {
           type = "app";

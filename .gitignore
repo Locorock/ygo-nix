@@ -2,7 +2,7 @@
 result
 result-*
 
-# Zip files (too large for git - should be fetched from releases)
+# Zip files (fetched from GitHub releases, not needed in repo)
 *.zip
 
 # Editor files

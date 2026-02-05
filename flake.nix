@@ -14,11 +14,25 @@
           config.allowUnfree = true;
         };
 
+        # Game files - fetched from GitHub releases
+        # NOTE: Update these URLs if the release structure changes
+        # To find latest URLs, visit: https://github.com/duelists-unite/omega-releases/releases
+        gameFiles = pkgs.fetchurl {
+          url = "https://github.com/duelists-unite/omega-releases/releases/download/Latest/linux-x64.zip";
+          hash = "sha256-O89OJFcAJ8XVvWMjIxGbPWrdgtZZEeCnnU6/zc+w8fc=";
+        };
+
+        launcherFiles = pkgs.fetchurl {
+          url = "https://github.com/duelists-unite/omega-releases/releases/download/Latest/Omega_Launcher-Linux.zip";
+          hash = "sha256-e7RHLRp/LGae4Z912oBlsTpPQrMCjXlsd18zQIxZVfo=";
+        };
+
         ygo-omega = pkgs.stdenv.mkDerivation {
           pname = "ygo-omega";
           version = "latest";
 
-          src = ./.;
+          # Use empty src since we're fetching files separately
+          src = pkgs.emptyDirectory;
 
           nativeBuildInputs = with pkgs; [
             autoPatchelfHook
@@ -62,8 +76,8 @@
 
           unpackPhase = ''
             runHook preUnpack
-            unzip -q ${./linux-x64.zip}
-            unzip -q ${./Omega_Launcher-Linux.zip}
+            unzip -q ${gameFiles}
+            unzip -q ${launcherFiles}
             runHook postUnpack
           '';
 

@@ -63,9 +63,15 @@
 
           # Runtime libraries (dlopen) - for makeWrapper
           runtimeLibs = with pkgs; [
+            alsa-lib
+            cairo
             dbus
+            glib
             libGL
             libxkbcommon
+            pango
+            stdenv.cc.cc.lib
+            xorg.libX11
             libXcursor
             libXext
             libXi
@@ -76,6 +82,7 @@
             udev
             vulkan-loader
             wayland
+            zlib
             krb5
             sqlite
           ];
@@ -145,7 +152,14 @@
                         runHook postInstall
           '';
 
+          # Don't auto-patch the game executable - we'll do it manually
+          dontAutoPatchelf = true;
+
           postFixup = ''
+            # Run autoPatchelfHook on everything except the main executable
+            autoPatchelf -- $out/libexec/ygo-omega/UnityPlayer.so
+            autoPatchelf -- $out/libexec/ygo-omega/GameAssembly.so
+
             # Patch UnityPlayer.so to add runtime libraries
             patchelf \
               --add-needed libasound.so.2 \
@@ -154,6 +168,12 @@
               --add-needed libvulkan.so.1 \
               --add-needed libX11.so.6 \
               $out/libexec/ygo-omega/UnityPlayer.so
+
+            # Manually patch the main executable with $ORIGIN first in RPATH
+            # This allows it to find UnityPlayer.so in current directory after being copied
+            patchelf \
+              --set-rpath '$ORIGIN:${pkgs.lib.makeLibraryPath ygo-omega.runtimeLibs}' \
+              "$out/libexec/ygo-omega/YGO Omega.x86_64"
           '';
 
           meta = with pkgs.lib; {

@@ -25,7 +25,7 @@
         # To find latest URLs, visit: https://github.com/duelists-unite/omega-releases/releases
         gameFiles = pkgs.fetchurl {
           url = "https://github.com/duelists-unite/omega-releases/releases/download/Latest/linux-x64.zip";
-          hash = "sha256-YzS2lNZv2F0+KYe/R7DpTpvmJQy6TICjqPokygb9ifg=";
+          hash = "sha256-0890JFcAJ8XVvWMjIxGbPWrdgtZZECnnU6";
         };
 
         launcherFiles = pkgs.fetchurl {
@@ -57,7 +57,7 @@
             stdenv.cc.cc.lib
             vulkan-loader
             wayland
-            xorg.libX11
+            libX11
             zlib
           ];
 

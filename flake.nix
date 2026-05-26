@@ -25,7 +25,7 @@
         # To find latest URLs, visit: https://github.com/duelists-unite/omega-releases/releases
         gameFiles = pkgs.fetchurl {
           url = "https://github.com/duelists-unite/omega-releases/releases/download/Latest/linux-x64.zip";
-          hash = "sha256-O89OJFcAJ8XVvWMjIxGbPWrdgtZZEeCnnU6/zc+w8fc=";
+          hash = "sha256-YzS2lNZv2F0+KYe/R7DpTpvmJQy6TICjqPokygb9ifg=";
         };
 
         launcherFiles = pkgs.fetchurl {
